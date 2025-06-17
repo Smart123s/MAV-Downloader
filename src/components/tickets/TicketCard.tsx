@@ -148,7 +148,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         alt={`Ticket for ${ticket.ticketName}`}
         width={720} 
         height={1000} 
-        className="object-contain w-full h-auto max-h-[450px] rounded-t-lg"
+        className="object-contain w-full h-auto max-h-[450px]"
         priority={false} 
       />
     );
@@ -159,7 +159,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         alt={`Placeholder for ${ticket.ticketName}`}
         width={300} 
         height={500} 
-        className="object-cover w-full h-auto max-h-[450px] rounded-t-lg"
+        className="object-cover w-full h-auto max-h-[450px]"
         data-ai-hint={aiHint || "train ticket travel"}
         priority={false}
       />
@@ -169,7 +169,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
       <CardHeader className="p-0 relative">
-        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden">
+        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] p-4 rounded-t-lg overflow-hidden">
           {imageElement}
         </div>
       </CardHeader>
