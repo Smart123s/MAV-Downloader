@@ -19,11 +19,11 @@ export default function UserNav() {
   const { username, logout, isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
-    return <Loader2 className="h-6 w-6 animate-spin" />;
+    return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
   }
 
   if (!isAuthenticated) {
-    return null; // Or a login button if preferred in this context
+    return null; 
   }
 
   const getInitials = (name: string | null) => {
@@ -65,4 +65,3 @@ export default function UserNav() {
     </DropdownMenu>
   );
 }
-
