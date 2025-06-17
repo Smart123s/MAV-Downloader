@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { DisplayableTicket, AppGetTicketImageSuccessResponse, AppGetTicketImageErrorResponse } from '@/types/mav-api';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 
 interface TicketCardProps {
   ticket: DisplayableTicket;
@@ -194,9 +193,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           </div>
           <div className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-primary" />
-            <Badge variant="secondary" className="text-sm px-2.5 py-0.5">
-              {ticket.price} HUF
-            </Badge>
+            <span>{ticket.price} HUF</span>
           </div>
           {ticket.discount && (
             <div className="flex items-center gap-2">
