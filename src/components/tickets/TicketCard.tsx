@@ -38,8 +38,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
 
         setImageLoading(true);
         setImageError(null);
-        // Set to placeholder initially while loading, in case previous image was for a different ticket
-        // or if this effect runs due to ticket.imageUrl changing (though less likely for bizonylatId to be same)
+        
         if (ticketImageSrc !== ticket.imageUrl && !ticketImageSrc.startsWith('data:image/jpeg')) {
              setTicketImageSrc(ticket.imageUrl);
         }
@@ -64,7 +63,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         } catch (err) {
             console.error(`Error fetching ticket image for ${currentBizonylatId}:`, err);
             setImageError(err instanceof Error ? err.message : "Could not load ticket image.");
-            if (!ticketImageSrc.startsWith('data:image/jpeg')) { // Only revert to placeholder if not already showing a real image that failed to update
+            if (!ticketImageSrc.startsWith('data:image/jpeg')) { 
                 setTicketImageSrc(ticket.imageUrl);
             }
         } finally {
@@ -74,7 +73,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
 
     fetchImage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket.bizonylatAzonosito, ticket.imageUrl, username, mavToken]); // Adding ticketImageSrc to deps would cause loop if fetch fails and resets to ticket.imageUrl
+  }, [ticket.bizonylatAzonosito, ticket.imageUrl, username, mavToken]); 
 
   const handleDownload = async () => {
     if (!username || !mavToken) {
@@ -88,7 +87,6 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
 
     setIsDownloading(true);
     try {
-      // Use already fetched image if available, otherwise fetch fresh for download
       let imageToDownload = ticketImageSrc.startsWith('data:image/jpeg') ? ticketImageSrc : null;
 
       if (!imageToDownload) {
@@ -148,19 +146,19 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
       <Image
         src={ticketImageSrc}
         alt={`Ticket for ${ticket.ticketName}`}
-        width={720} // Intrinsic width of source image for aspect ratio hint
-        height={1000} // Estimated average intrinsic height
+        width={720} 
+        height={1000} 
         className="object-contain w-full h-auto max-h-[450px] rounded-t-lg"
-        priority={false} // Not LCP
+        priority={false} 
       />
     );
-  } else { // Placeholder
+  } else { 
     imageElement = (
       <Image
-        src={ticketImageSrc} // This will be ticket.imageUrl (placeholder)
+        src={ticketImageSrc} 
         alt={`Placeholder for ${ticket.ticketName}`}
-        width={300} // Placeholder's actual width
-        height={500} // Placeholder's actual height
+        width={300} 
+        height={500} 
         className="object-cover w-full h-auto max-h-[450px] rounded-t-lg"
         data-ai-hint={aiHint || "train ticket travel"}
         priority={false}
@@ -175,38 +173,40 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           {imageElement}
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <div className="flex justify-between items-start mb-3">
-          <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
-            {ticket.ticketName}
-          </CardTitle>
-        </div>
-        
-        <div className="text-sm text-muted-foreground space-y-1.5">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-primary" /> 
-            <span>{ticket.passengerName}</span>
+      <CardContent className="p-4 flex-grow flex flex-col justify-end">
+        <div> {/* Wrapper for title and details to be pushed to bottom */}
+          <div className="flex justify-between items-start mb-3">
+            <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
+              {ticket.ticketName}
+            </CardTitle>
           </div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <span>{formatDate(ticket.validFrom)} - {formatDate(ticket.validTo)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Coins className="h-4 w-4 text-primary" />
-            <span>{ticket.price} HUF</span>
-          </div>
-          {ticket.discount && (
+          
+          <div className="text-sm text-muted-foreground space-y-1.5">
             <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-primary" />
-              <span>{ticket.discount}</span>
+              <User className="h-4 w-4 text-primary" /> 
+              <span>{ticket.passengerName}</span>
             </div>
-          )}
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-primary" />
-            <span>Status: {ticket.status}</span>
-          </div>
-           <div className="flex items-center gap-2 text-xs">
-            <span>ID: {ticket.bizonylatAzonosito} / {ticket.jegysorszam}</span>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <span>{formatDate(ticket.validFrom)} - {formatDate(ticket.validTo)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Coins className="h-4 w-4 text-primary" />
+              <span>{ticket.price} HUF</span>
+            </div>
+            {ticket.discount && (
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary" />
+                <span>{ticket.discount}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              <span>Status: {ticket.status}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span>ID: {ticket.bizonylatAzonosito} / {ticket.jegysorszam}</span>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -215,7 +215,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           onClick={handleDownload} 
           className="w-full" 
           aria-label={`Download ticket for ${ticket.ticketName}`}
-          disabled={isDownloading || imageLoading} // Also disable download if main image is loading
+          disabled={isDownloading || imageLoading} 
         >
           {isDownloading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
