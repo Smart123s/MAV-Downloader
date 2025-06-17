@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import Header from '@/components/layout/Header';
 import TicketCard from '@/components/tickets/TicketCard';
-import { Loader2, AlertTriangle, Ticket as TicketIconSvg } from 'lucide-react';
+import { Loader2, AlertTriangle, Ticket as TicketIconSvg, Github } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { DisplayableTicket } from '@/types/mav-api';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function TicketsPage() {
   const router = useRouter();
@@ -83,7 +84,16 @@ export default function TicketsPage() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </main>
          <footer className="py-6 text-center text-sm text-muted-foreground">
-           Ticket Downloader &copy; {new Date().getFullYear()}
+           <p className="mb-2">This application is not affiliated with MÁV-START Zrt. or MÁV Zrt.</p>
+            <Link
+              href="https://github.com/Smart123s/MÁV-Downloader"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <Github className="h-4 w-4" />
+              <span>View Source on GitHub</span>
+            </Link>
         </footer>
       </div>
     );
@@ -141,7 +151,16 @@ export default function TicketsPage() {
         )}
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground">
-         Ticket Downloader &copy; {new Date().getFullYear()}
+         <p className="mb-2">This application is not affiliated with MÁV-START Zrt. or MÁV Zrt.</p>
+          <Link
+            href="https://github.com/Smart123s/MÁV-Downloader"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-primary hover:underline"
+          >
+            <Github className="h-4 w-4" />
+            <span>View Source on GitHub</span>
+          </Link>
       </footer>
     </div>
   );

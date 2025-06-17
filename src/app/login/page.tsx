@@ -1,7 +1,8 @@
 
 import LoginForm from '@/components/auth/LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TicketIcon } from 'lucide-react';
+import { TicketIcon, Github } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   return (
@@ -16,9 +17,18 @@ export default function LoginPage() {
           <LoginForm />
         </CardContent>
       </Card>
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        Ticket Downloader &copy; {new Date().getFullYear()}
-      </p>
+      <footer className="mt-8 text-center text-sm text-muted-foreground">
+        <p className="mb-2">This application is not affiliated with MÁV-START Zrt. or MÁV Zrt.</p>
+        <Link
+          href="https://github.com/Smart123s/MÁV-Downloader"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-primary hover:underline"
+        >
+          <Github className="h-4 w-4" />
+          <span>View Source on GitHub</span>
+        </Link>
+      </footer>
     </div>
   );
 }
