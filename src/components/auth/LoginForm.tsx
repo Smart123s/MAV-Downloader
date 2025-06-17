@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
@@ -30,7 +29,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login: authLoginHook } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,25 +43,38 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Mock API response
-    if (data.username === "mavuser" && data.password === "password123") {
-      login(data.username);
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${data.username}!`,
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: data.username, password: data.password }),
       });
-      router.push('/tickets');
-    } else {
+
+      const result = await response.json();
+
+      if (response.ok && result.token) {
+        authLoginHook(result.username, result.token, result.expiresAt);
+        // No success toast as per guidelines, navigation is the indicator
+        router.push('/tickets');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.message || "Invalid username or password. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Login form submission error:", error);
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid username or password. Please try again.",
+        title: "Login Error",
+        description: "An unexpected error occurred. Please try again later.",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

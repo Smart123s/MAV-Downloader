@@ -9,16 +9,23 @@ const AUTH_STORAGE_KEY = 'ticket-downloader-auth';
 interface AuthState {
   isAuthenticated: boolean;
   username: string | null;
+  mavToken: string | null;
+  tokenExpiresAt: number | null; 
 }
 
 interface AuthContextType extends AuthState {
-  login: (username: string) => void;
+  login: (username: string, mavToken: string, tokenExpiresAt: number) => void;
   logout: () => void;
   isLoading: boolean;
 }
 
 export function useAuth(): AuthContextType {
-  const [authState, setAuthState] = useState<AuthState>({ isAuthenticated: false, username: null });
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    username: null,
+    mavToken: null,
+    tokenExpiresAt: null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -27,7 +34,12 @@ export function useAuth(): AuthContextType {
       const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
       if (storedAuth) {
         const parsedAuth: AuthState = JSON.parse(storedAuth);
-        setAuthState(parsedAuth);
+        if (parsedAuth.tokenExpiresAt && parsedAuth.tokenExpiresAt * 1000 < Date.now()) {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          setAuthState({ isAuthenticated: false, username: null, mavToken: null, tokenExpiresAt: null });
+        } else {
+          setAuthState(parsedAuth);
+        }
       }
     } catch (error) {
       console.error("Failed to parse auth state from localStorage", error);
@@ -36,8 +48,8 @@ export function useAuth(): AuthContextType {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback((username: string) => {
-    const newState: AuthState = { isAuthenticated: true, username };
+  const login = useCallback((username: string, mavToken: string, tokenExpiresAt: number) => {
+    const newState: AuthState = { isAuthenticated: true, username, mavToken, tokenExpiresAt };
     setAuthState(newState);
     try {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newState));
@@ -47,11 +59,12 @@ export function useAuth(): AuthContextType {
   }, []);
 
   const logout = useCallback(() => {
-    const newState: AuthState = { isAuthenticated: false, username: null };
+    const newState: AuthState = { isAuthenticated: false, username: null, mavToken: null, tokenExpiresAt: null };
     setAuthState(newState);
     try {
       localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch (error) {
+    } catch (error)
+    {
       console.error("Failed to remove auth state from localStorage", error);
     }
     router.push('/login');
