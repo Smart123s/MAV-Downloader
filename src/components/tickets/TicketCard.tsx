@@ -1,15 +1,16 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, User, CalendarDays, Tag, Info, Loader2 } from 'lucide-react';
+import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { DisplayableTicket, AppGetTicketImageSuccessResponse, AppGetTicketImageErrorResponse } from '@/types/mav-api';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 interface TicketCardProps {
   ticket: DisplayableTicket;
@@ -20,6 +21,61 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   const { toast } = useToast();
   const { username, mavToken } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const [ticketImageSrc, setTicketImageSrc] = useState<string>(ticket.imageUrl);
+  const [imageLoading, setImageLoading] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const currentBizonylatId = ticket.bizonylatAzonosito;
+
+    const fetchImage = async () => {
+        if (!currentBizonylatId || !username || !mavToken) {
+            setTicketImageSrc(ticket.imageUrl); // Fallback to placeholder
+            setImageLoading(false);
+            setImageError(null);
+            return;
+        }
+
+        setImageLoading(true);
+        setImageError(null);
+        // Set to placeholder initially while loading, in case previous image was for a different ticket
+        // or if this effect runs due to ticket.imageUrl changing (though less likely for bizonylatId to be same)
+        if (ticketImageSrc !== ticket.imageUrl && !ticketImageSrc.startsWith('data:image/jpeg')) {
+             setTicketImageSrc(ticket.imageUrl);
+        }
+
+
+        try {
+            const response = await fetch('/api/ticket-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    token: mavToken,
+                    bizonylatAzonosito: currentBizonylatId,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error((result as AppGetTicketImageErrorResponse).message || `Failed to fetch image (HTTP ${response.status})`);
+            }
+            const successResult = result as AppGetTicketImageSuccessResponse;
+            setTicketImageSrc(`data:image/jpeg;base64,${successResult.jegykep}`);
+        } catch (err) {
+            console.error(`Error fetching ticket image for ${currentBizonylatId}:`, err);
+            setImageError(err instanceof Error ? err.message : "Could not load ticket image.");
+            if (!ticketImageSrc.startsWith('data:image/jpeg')) { // Only revert to placeholder if not already showing a real image that failed to update
+                setTicketImageSrc(ticket.imageUrl);
+            }
+        } finally {
+            setImageLoading(false);
+        }
+    };
+
+    fetchImage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.bizonylatAzonosito, ticket.imageUrl, username, mavToken]); // Adding ticketImageSrc to deps would cause loop if fetch fails and resets to ticket.imageUrl
 
   const handleDownload = async () => {
     if (!username || !mavToken) {
@@ -33,42 +89,32 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
 
     setIsDownloading(true);
     try {
-      const response = await fetch('/api/ticket-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          token: mavToken,
-          bizonylatAzonosito: ticket.bizonylatAzonosito,
-        }),
-      });
+      // Use already fetched image if available, otherwise fetch fresh for download
+      let imageToDownload = ticketImageSrc.startsWith('data:image/jpeg') ? ticketImageSrc : null;
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        const errorResult = result as AppGetTicketImageErrorResponse;
-        throw new Error(errorResult.message || `Failed to download ticket image (HTTP ${response.status})`);
+      if (!imageToDownload) {
+        const response = await fetch('/api/ticket-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            token: mavToken,
+            bizonylatAzonosito: ticket.bizonylatAzonosito,
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error((result as AppGetTicketImageErrorResponse).message || `Failed to download ticket (HTTP ${response.status})`);
+        }
+        imageToDownload = `data:image/jpeg;base64,${(result as AppGetTicketImageSuccessResponse).jegykep}`;
       }
-
-      const successResult = result as AppGetTicketImageSuccessResponse;
       
       const link = document.createElement('a');
-      link.href = `data:image/jpeg;base64,${successResult.jegykep}`;
-      link.download = `${ticket.ticketName.replace(/\s+/g, '_')}_${ticket.passengerName.replace(/\s+/g, '_')}_${successResult.jegysorszam}.jpeg`;
+      link.href = imageToDownload;
+      link.download = `${ticket.ticketName.replace(/\s+/g, '_')}_${ticket.passengerName.replace(/\s+/g, '_')}_${ticket.jegysorszam}.jpeg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Success toast for download might be against guidelines if strictly followed.
-      // For now, providing a minimal success indication, as it's a key user action.
-      // Consider removing if toasts are strictly for errors.
-      // toast({ 
-      //   title: "Download Started",
-      //   description: `Ticket "${ticket.ticketName}" is downloading.`,
-      //   className: "bg-accent text-accent-foreground"
-      // });
 
     } catch (error) {
       console.error("Download error:", error);
@@ -87,27 +133,58 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
     return format(new Date(timestamp * 1000), 'MMM d, yyyy');
   };
 
+  let imageElement;
+  if (imageLoading) {
+    imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
+  } else if (imageError) {
+    imageElement = (
+      <div className="text-center p-4 flex flex-col items-center justify-center text-destructive">
+        <AlertTriangle className="h-10 w-10 mb-2" />
+        <p className="text-sm font-semibold">Image Error</p>
+        <p className="text-xs max-w-full truncate" title={imageError}>{imageError.substring(0,100)}</p>
+      </div>
+    );
+  } else if (ticketImageSrc && ticketImageSrc.startsWith('data:image/jpeg')) {
+    imageElement = (
+      <Image
+        src={ticketImageSrc}
+        alt={`Ticket for ${ticket.ticketName}`}
+        width={720} // Intrinsic width of source image for aspect ratio hint
+        height={1000} // Estimated average intrinsic height
+        className="object-contain w-full h-auto max-h-[450px] rounded-t-lg"
+        priority={false} // Not LCP
+      />
+    );
+  } else { // Placeholder
+    imageElement = (
+      <Image
+        src={ticketImageSrc} // This will be ticket.imageUrl (placeholder)
+        alt={`Placeholder for ${ticket.ticketName}`}
+        width={300} // Placeholder's actual width
+        height={500} // Placeholder's actual height
+        className="object-cover w-full h-auto max-h-[450px] rounded-t-lg"
+        data-ai-hint={aiHint || "train ticket travel"}
+        priority={false}
+      />
+    );
+  }
+
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
       <CardHeader className="p-0 relative">
-        <div className="aspect-[3/5] w-full relative">
-          <Image
-            src={ticket.imageUrl} // Still using placeholder for card display
-            alt={`Placeholder for ${ticket.ticketName}`}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint={aiHint || "train ticket travel"}
-          />
-        </div>
-        <div className="absolute top-2 right-2 bg-primary/80 text-primary-foreground text-xs font-semibold px-2 py-1 rounded">
-          {ticket.price} HUF
+        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden">
+          {imageElement}
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-grow space-y-2">
-        <CardTitle className="font-headline text-lg leading-tight mb-1 truncate" title={ticket.ticketName}>
-          {ticket.ticketName}
-        </CardTitle>
+      <CardContent className="p-4 flex-grow">
+        <div className="flex justify-between items-start mb-3">
+          <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
+            {ticket.ticketName}
+          </CardTitle>
+          <Badge variant="secondary" className="shrink-0 text-sm px-2.5 py-1">
+            {ticket.price} HUF
+          </Badge>
+        </div>
         
         <div className="text-sm text-muted-foreground space-y-1.5">
           <div className="flex items-center gap-2">
@@ -138,7 +215,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           onClick={handleDownload} 
           className="w-full" 
           aria-label={`Download ticket for ${ticket.ticketName}`}
-          disabled={isDownloading}
+          disabled={isDownloading || imageLoading} // Also disable download if main image is loading
         >
           {isDownloading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -151,3 +228,4 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
     </Card>
   );
 }
+
