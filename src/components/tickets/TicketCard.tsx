@@ -169,7 +169,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
       <CardHeader className="p-0 relative">
-        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] p-4 rounded-t-lg overflow-hidden">
+        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden">
           {imageElement}
         </div>
       </CardHeader>
