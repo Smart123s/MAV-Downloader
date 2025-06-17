@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle, Coins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { DisplayableTicket, AppGetTicketImageSuccessResponse, AppGetTicketImageErrorResponse } from '@/types/mav-api';
@@ -181,9 +181,6 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
             {ticket.ticketName}
           </CardTitle>
-          <Badge variant="secondary" className="shrink-0 text-sm px-2.5 py-1">
-            {ticket.price} HUF
-          </Badge>
         </div>
         
         <div className="text-sm text-muted-foreground space-y-1.5">
@@ -194,6 +191,12 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             <span>{formatDate(ticket.validFrom)} - {formatDate(ticket.validTo)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Coins className="h-4 w-4 text-primary" />
+            <Badge variant="secondary" className="text-sm px-2.5 py-0.5">
+              {ticket.price} HUF
+            </Badge>
           </div>
           {ticket.discount && (
             <div className="flex items-center gap-2">
