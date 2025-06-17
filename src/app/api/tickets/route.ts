@@ -9,7 +9,7 @@ import type {
   MavJegykepAdat,
   MavJegy
 } from '@/types/mav-api';
-import { ثابت_UAID } from '@/lib/constants'; // Using a constant for UAID
+import { ثابت_UAID } from '@/lib/constants'; 
 
 const MAV_API_TICKETS_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/MegrendelesKereses';
 
@@ -64,8 +64,7 @@ export async function POST(request: NextRequest) {
               validTo: ticketDetail.ErvVeg,
               price: ticketDetail.Ar,
               status: ticketDetail.Allapot,
-              imageUrl: `https://placehold.co/300x500.png?text=${encodeURIComponent(ticketDetail.Nev.substring(0,15))}`, // Placeholder
-              downloadUrl: `https://placehold.co/300x500.png?text=${encodeURIComponent(ticketDetail.Nev.substring(0,15))}`, // Placeholder
+              imageUrl: `https://placehold.co/300x500.png?text=${encodeURIComponent(ticketDetail.Nev.substring(0,15))}`, // Placeholder for card display
               bizonylatAzonosito: ticketImageGroup.BizonylatAzonosito,
               jegysorszam: ticketImageGroup.Jegysorszam,
               tetelAzonosito: ticketDetail.TetelAzonosito,
@@ -75,8 +74,6 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(displayableTickets, { status: 200 });
     } else {
-      // Handle cases where Megrendelesek might be missing but response is 200 OK
-      // or if there's an unexpected structure.
       return NextResponse.json({ message: 'No tickets found or unexpected response structure.', rawResponse: successData }, { status: 200 });
     }
 

@@ -51,7 +51,7 @@ export interface MavJegy {
 
 export interface MavJegykepAdat {
   UtasNeve: string;
-  SzuletesiDatum?: number; // Optional as per example, but good to have
+  SzuletesiDatum?: number; 
   Jegysorszam: string;
   BizonylatAzonosito: string;
   Jegyek: MavJegy[];
@@ -68,7 +68,7 @@ export interface MavMegrendeles {
   MegrendelesAzonosito: string;
   VasarlasDatuma: number;
   CsoportAzon: string;
-  BerletTok?: MavBerletTok; // Optional as per example
+  BerletTok?: MavBerletTok; 
   JegykepAdatok: MavJegykepAdat[];
   AtvetMod: string;
 }
@@ -79,14 +79,13 @@ export interface MavMegrendelesKeresesSuccessResponse {
 
 export interface MavMegrendelesKeresesErrorResponse {
   Message?: string;
-  // Define other potential error fields if known
 }
 
-// Type for our backend API response for tickets
+// Type for our backend API response for tickets list
 export interface DisplayableTicket {
   id: string;
   orderId: string;
-  ticketKey: string; // Combination of BizonylatAzonosito and Jegysorszam for GetJegykep
+  ticketKey: string; 
   passengerName: string;
   ticketName: string;
   discount?: string;
@@ -94,9 +93,52 @@ export interface DisplayableTicket {
   validTo: number;
   price: number;
   status: string;
-  imageUrl: string;
-  downloadUrl: string;
+  imageUrl: string; // This will be the placeholder image URL
   bizonylatAzonosito: string;
   jegysorszam: string;
   tetelAzonosito: string;
+}
+
+// Types for GetJegykep (Get Ticket Image)
+export interface MavGetJegykepRequestPayload {
+  FelhasznaloAzonosito: string;
+  BizonylatAzonosito: string[]; // MAV API expects an array
+  Token: string;
+  Nyelv: "HU";
+  UAID: string;
+}
+
+export interface MavBizonylat {
+  BizonylatFajta: string;
+  BizonylatTechnikaiAzonosito: string; // This should match the requested BizonylatAzonosito
+  Jegysorszam: string;
+  Jegykep: string; // base64 encoded jpeg
+}
+
+export interface MavGetJegykepSuccessResponse {
+  Bizonylatok: MavBizonylat[];
+}
+
+export interface MavGetJegykepErrorResponse {
+  Message?: string;
+}
+
+// Type for our backend API request to fetch a single ticket image
+export interface AppGetTicketImageRequestPayload {
+  username: string;
+  token: string;
+  bizonylatAzonosito: string;
+}
+
+// Type for our backend API response for a single ticket image
+export interface AppGetTicketImageSuccessResponse {
+  bizonylatAzonosito: string;
+  jegykep: string; // base64 encoded jpeg
+  jegysorszam: string;
+  bizonylatFajta: string;
+}
+
+export interface AppGetTicketImageErrorResponse {
+    message: string;
+    rawError?: any;
 }
