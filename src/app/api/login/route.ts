@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json', // Added Accept header
       },
       body: JSON.stringify(mavPayload),
     });
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (successData.Token) {
       return NextResponse.json({
         token: successData.Token,
-        username: username, 
+        username: username,
         expiresAt: successData.ErvenyessegVege,
         // ElfogadandoDoksik: successData.ElfogadandoDoksik, // Can be passed if needed
       }, { status: 200 });
@@ -56,3 +57,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
+
