@@ -71,23 +71,21 @@ Directly accessing MÁV's APIs from a web browser is often hindered by Cross-Ori
 
 ## Rate Limiting
 
-To prevent abuse and to respect MÁV's API limits, this application includes a global rate limiter for requests proxied to the MÁV servers. By default, it allows 3000 requests per hour from this application instance.
+To prevent abuse and to respect MÁV's API limits, this application includes a global rate limiter for requests proxied to the MÁV servers. By default, it allows 3000 requests per hour from this application instance. The rate-limiting window is fixed at 1 hour.
 
-This limit applies globally to all users of this instance of the application. If you are self-hosting and expect high traffic, you might need to adjust these limits or implement a more robust distributed rate-limiting solution if deploying multiple instances.
+This limit applies globally to all users of this instance of the application. If you are self-hosting and expect high traffic, you might need to adjust this limit or implement a more robust distributed rate-limiting solution if deploying multiple instances.
 
 ### Configuration
 
-The rate limit can be configured using the following environment variables:
+The maximum number of requests per hour can be configured using the following environment variable:
 
--   `MAV_API_RATE_LIMIT_MAX_REQUESTS`: The maximum number of requests allowed within the window. (Default: `3000`)
--   `MAV_API_RATE_LIMIT_WINDOW_HOURS`: The duration of the rate limiting window in hours. (Default: `1`)
+-   `MAV_API_MAX_HOURLY_REQUESTS`: The maximum number of requests allowed within a 1-hour window. (Default: `3000`)
 
-For example, to set the limit to 1000 requests per 30 minutes, you would set these environment variables before running the application:
+For example, to set the limit to 1000 requests per hour, you would set this environment variable before running the application:
 ```bash
-export MAV_API_RATE_LIMIT_MAX_REQUESTS=1000
-export MAV_API_RATE_LIMIT_WINDOW_HOURS=0.5
+export MAV_API_MAX_HOURLY_REQUESTS=1000
 ```
-Or, if using Docker, you can pass them using the `-e` flag or in your `docker-compose.yml` file.
+Or, if using Docker, you can pass it using the `-e` flag or in your `docker-compose.yml` file.
 
 ## Disclaimer
 

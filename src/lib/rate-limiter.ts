@@ -1,9 +1,8 @@
 
 // src/lib/rate-limiter.ts
 
-const MAX_REQUESTS = parseInt(process.env.MAV_API_RATE_LIMIT_MAX_REQUESTS || '3000', 10);
-const WINDOW_HOURS = parseFloat(process.env.MAV_API_RATE_LIMIT_WINDOW_HOURS || '1');
-const WINDOW_MS = WINDOW_HOURS * 60 * 60 * 1000;
+const MAX_REQUESTS = parseInt(process.env.MAV_API_MAX_HOURLY_REQUESTS || '3000', 10);
+const WINDOW_MS = 1 * 60 * 60 * 1000; // Fixed 1-hour window
 
 // Stores timestamps of requests, sorted ascending.
 // This is an in-memory store, suitable for a single-instance deployment.
@@ -22,7 +21,7 @@ export function isRateLimited(): boolean {
   // Check if the number of requests in the current window exceeds the limit.
   if (requestTimestamps.length >= MAX_REQUESTS) {
     console.warn(
-      `Rate limit exceeded. Requests in window: ${requestTimestamps.length}, Max allowed: ${MAX_REQUESTS}. Window: ${WINDOW_HOURS} hour(s).`
+      `Rate limit exceeded. Requests in the last hour: ${requestTimestamps.length}, Max allowed: ${MAX_REQUESTS}.`
     );
     return true; // Rate limit exceeded
   }
