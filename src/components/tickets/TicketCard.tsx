@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle, Coins } from 'lucide-react';
+import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle, Coins, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { DisplayableTicket, AppGetTicketImageSuccessResponse, AppGetTicketImageErrorResponse } from '@/types/mav-api';
@@ -20,60 +20,81 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   const { toast } = useToast();
   const { username, mavToken } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const [ticketImageSrc, setTicketImageSrc] = useState<string>(ticket.imageUrl);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
+  const fetchAndSetActualImage = useCallback(async (currentBizonylatId: string) => {
+    if (!username || !mavToken) {
+        // Fallback to placeholder if auth details are missing during an explicit fetch
+        setTicketImageSrc(ticket.imageUrl);
+        setImageLoading(false);
+        setImageError("Authentication details missing.");
+        return ticket.imageUrl; // Return placeholder
+    }
+
+    setImageLoading(true);
+    setImageError(null);
+    
+    try {
+        const response = await fetch('/api/ticket-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                token: mavToken,
+                bizonylatAzonosito: currentBizonylatId,
+            }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error((result as AppGetTicketImageErrorResponse).message || `Failed to fetch image (HTTP ${response.status})`);
+        }
+        const successResult = result as AppGetTicketImageSuccessResponse;
+        const newImageSrc = `data:image/jpeg;base64,${successResult.jegykep}`;
+        setTicketImageSrc(newImageSrc);
+        return newImageSrc;
+    } catch (err) {
+        console.error(`Error fetching ticket image for ${currentBizonylatId}:`, err);
+        const errorMessage = err instanceof Error ? err.message : "Could not load ticket image.";
+        setImageError(errorMessage);
+        if (!ticketImageSrc.startsWith('data:image/jpeg')) { 
+            setTicketImageSrc(ticket.imageUrl); // Revert to placeholder if current isn't actual image
+        }
+        throw err; // Re-throw to be caught by calling function
+    } finally {
+        setImageLoading(false);
+    }
+  }, [username, mavToken, ticket.imageUrl, ticketImageSrc]);
+
+
   useEffect(() => {
     const currentBizonylatId = ticket.bizonylatAzonosito;
-
-    const fetchImage = async () => {
-        if (!currentBizonylatId || !username || !mavToken) {
-            setTicketImageSrc(ticket.imageUrl); // Fallback to placeholder
-            setImageLoading(false);
-            setImageError(null);
-            return;
-        }
-
-        setImageLoading(true);
+    if (!currentBizonylatId) {
+        setTicketImageSrc(ticket.imageUrl); // Fallback to placeholder
+        setImageLoading(false);
         setImageError(null);
-        
-        if (ticketImageSrc !== ticket.imageUrl && !ticketImageSrc.startsWith('data:image/jpeg')) {
-             setTicketImageSrc(ticket.imageUrl);
-        }
-
-
-        try {
-            const response = await fetch('/api/ticket-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username,
-                    token: mavToken,
-                    bizonylatAzonosito: currentBizonylatId,
-                }),
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error((result as AppGetTicketImageErrorResponse).message || `Failed to fetch image (HTTP ${response.status})`);
-            }
-            const successResult = result as AppGetTicketImageSuccessResponse;
-            setTicketImageSrc(`data:image/jpeg;base64,${successResult.jegykep}`);
-        } catch (err) {
-            console.error(`Error fetching ticket image for ${currentBizonylatId}:`, err);
-            setImageError(err instanceof Error ? err.message : "Could not load ticket image.");
-            if (!ticketImageSrc.startsWith('data:image/jpeg')) { 
-                setTicketImageSrc(ticket.imageUrl);
-            }
-        } finally {
-            setImageLoading(false);
-        }
-    };
-
-    fetchImage();
+        return;
+    }
+    // Only auto-fetch if the current source is the placeholder
+    if (ticketImageSrc === ticket.imageUrl || !ticketImageSrc.startsWith('data:image/jpeg')) {
+        fetchAndSetActualImage(currentBizonylatId).catch(() => {
+            // Error is handled within fetchAndSetActualImage by setting imageError
+        });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket.bizonylatAzonosito, ticket.imageUrl, username, mavToken]); 
+  }, [ticket.bizonylatAzonosito, ticket.imageUrl]); // Removed fetchAndSetActualImage from deps to avoid cycle with ticketImageSrc
+
+  const getTicketImageDataUri = async (): Promise<string> => {
+    if (ticketImageSrc.startsWith('data:image/jpeg')) {
+      return ticketImageSrc;
+    }
+    // If not a data URI, it must be the placeholder or an error state, try fetching.
+    return fetchAndSetActualImage(ticket.bizonylatAzonosito);
+  };
+  
 
   const handleDownload = async () => {
     if (!username || !mavToken) {
@@ -84,27 +105,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
       });
       return;
     }
-
     setIsDownloading(true);
     try {
-      let imageToDownload = ticketImageSrc.startsWith('data:image/jpeg') ? ticketImageSrc : null;
-
-      if (!imageToDownload) {
-        const response = await fetch('/api/ticket-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username,
-            token: mavToken,
-            bizonylatAzonosito: ticket.bizonylatAzonosito,
-          }),
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error((result as AppGetTicketImageErrorResponse).message || `Failed to download ticket (HTTP ${response.status})`);
-        }
-        imageToDownload = `data:image/jpeg;base64,${(result as AppGetTicketImageSuccessResponse).jegykep}`;
-      }
+      const imageToDownload = await getTicketImageDataUri();
       
       const link = document.createElement('a');
       link.href = imageToDownload;
@@ -125,15 +128,83 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
     }
   };
 
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    try {
+      const imageDataUri = await getTicketImageDataUri();
+      const printWindow = window.open('', '_blank');
+      
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print Ticket - ${ticket.ticketName}</title>
+              <style>
+                @page { 
+                  size: auto; 
+                  margin: 10mm; /* Sensible default print margin */
+                }
+                body { 
+                  margin: 0; 
+                  padding: 0; 
+                  display: flex; 
+                  justify-content: center; /* Center image on page */
+                  align-items: flex-start; /* Align image to top if page is larger */
+                }
+                img { 
+                  width: 8.2cm; 
+                  max-width: 100%; /* Ensure it doesn't overflow small paper */
+                  height: auto; 
+                  display: block; 
+                }
+                @media print {
+                  body { 
+                    display: block; /* For print, simple block display might be better */
+                    margin: 0; padding: 0; 
+                  } 
+                  img {
+                     margin: 0 auto; /* Center image block if body is block */
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${imageDataUri}" alt="Ticket for ${ticket.passengerName} - ${ticket.ticketName}" onload="setTimeout(() => { window.print(); }, 200);" />
+            </body>
+          </html>
+        `);
+        // Removed window.close() as it can be unreliable and often blocked.
+        // User can close the tab manually after printing.
+        printWindow.document.close(); // Necessary for some browsers to finish loading
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Print Error",
+          description: "Could not open a new window for printing. Please check your browser's pop-up blocker settings.",
+        });
+      }
+    } catch (error) {
+      console.error("Print error:", error);
+      toast({
+        variant: "destructive",
+        title: "Print Failed",
+        description: error instanceof Error ? error.message : "Could not prepare ticket for printing.",
+      });
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+
   const formatDate = (timestamp: number) => {
     if (!timestamp) return "N/A";
     return format(new Date(timestamp * 1000), 'MMM d, yyyy');
   };
 
   let imageElement;
-  if (imageLoading) {
+  if (imageLoading && !ticketImageSrc.startsWith('data:image/jpeg')) { // Show loader only if current image isn't already the actual one
     imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
-  } else if (imageError) {
+  } else if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) { // Show error only if we couldn't load actual image
     imageElement = (
       <div className="text-center p-4 flex flex-col items-center justify-center text-destructive">
         <AlertTriangle className="h-10 w-10 mb-2" />
@@ -141,30 +212,23 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         <p className="text-xs max-w-full truncate" title={imageError}>{imageError.substring(0,100)}</p>
       </div>
     );
-  } else if (ticketImageSrc && ticketImageSrc.startsWith('data:image/jpeg')) {
+  } else if (ticketImageSrc && (ticketImageSrc.startsWith('data:image/jpeg') || ticketImageSrc === ticket.imageUrl) ) {
+     // Display actual image or placeholder if actual image is still loading or failed but we want to show something
     imageElement = (
       <Image
-        src={ticketImageSrc}
+        src={ticketImageSrc} // This will be data URI or placeholder
         alt={`Ticket for ${ticket.ticketName}`}
-        width={720} 
-        height={1000} 
+        width={ticketImageSrc.startsWith('data:image/jpeg') ? 720 : 300} 
+        height={ticketImageSrc.startsWith('data:image/jpeg') ? 1000 : 500}
         className="object-contain w-full h-auto max-h-[450px]"
+        data-ai-hint={aiHint || "train ticket travel"}
         priority={false} 
       />
     );
-  } else { 
-    imageElement = (
-      <Image
-        src={ticketImageSrc} 
-        alt={`Placeholder for ${ticket.ticketName}`}
-        width={300} 
-        height={500} 
-        className="object-cover w-full h-auto max-h-[450px]"
-        data-ai-hint={aiHint || "train ticket travel"}
-        priority={false}
-      />
-    );
+  } else { // Fallback loader if something unexpected
+     imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
   }
+
 
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
@@ -211,21 +275,36 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         </div>
       </CardContent>
       <CardFooter className="p-4 border-t">
-        <Button 
-          onClick={handleDownload} 
-          className="w-full" 
-          aria-label={`Download ticket for ${ticket.ticketName}`}
-          disabled={isDownloading || imageLoading} 
-        >
-          {isDownloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          {isDownloading ? 'Downloading...' : 'Download Ticket'}
-        </Button>
+        <div className="flex w-full gap-2">
+            <Button 
+              onClick={handleDownload} 
+              className="flex-1" 
+              aria-label={`Download ticket for ${ticket.ticketName}`}
+              disabled={isDownloading || isPrinting || imageLoading} 
+            >
+              {isDownloading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {isDownloading ? 'Downloading...' : 'Download'}
+            </Button>
+            <Button 
+              onClick={handlePrint} 
+              className="flex-1"
+              variant="outline"
+              aria-label={`Print ticket for ${ticket.ticketName}`}
+              disabled={isPrinting || isDownloading || imageLoading} 
+            >
+              {isPrinting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="mr-2 h-4 w-4" />
+              )}
+              {isPrinting ? 'Printing...' : 'Print'}
+            </Button>
+        </div>
       </CardFooter>
     </Card>
   );
 }
-
