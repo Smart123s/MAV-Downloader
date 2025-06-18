@@ -1,3 +1,4 @@
+
 name: Docker
 
 on:
@@ -34,3 +35,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/smart123s/mav-downloader:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
