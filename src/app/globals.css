@@ -24,6 +24,8 @@ body {
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-hover-background: 0 90% 62%; /* More vibrant red for light mode hover */
+    --destructive-hover-foreground: 0 0% 100%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 221 83% 60%; /* Vivid blue #4285F4 for ring */
@@ -59,6 +61,8 @@ body {
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-hover-background: 0 88% 68%; /* Brighter and more vibrant red for dark mode hover */
+    --destructive-hover-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 221 83% 60%; /* Vivid blue #4285F4 for ring */
