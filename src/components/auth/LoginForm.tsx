@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, HelpCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -19,6 +19,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const loginSchema = z.object({
   username: z.string().min(1, { message: "Username is required." }),
@@ -32,6 +38,13 @@ export default function LoginForm() {
   const { login: authLoginHook } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [hostname, setHostname] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostname(window.location.hostname);
+    }
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,7 +69,6 @@ export default function LoginForm() {
 
       if (response.ok && result.token) {
         authLoginHook(result.username, result.token, result.expiresAt);
-        // No success toast as per guidelines, navigation is the indicator
         router.push('/tickets');
       } else {
         toast({
@@ -78,56 +90,75 @@ export default function LoginForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="username">Username</FormLabel>
-              <FormControl>
-                <Input
-                  id="username"
-                  placeholder="Your MÁV Username"
-                  autoComplete="username"
-                  {...field}
-                  className="text-base"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="password">Password</FormLabel>
-              <FormControl>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Your MÁV Password"
-                  autoComplete="current-password"
-                  {...field}
-                  className="text-base"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full text-base py-6" disabled={isLoading}>
-          {isLoading ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <LogIn className="mr-2 h-5 w-5" />
-          )}
-          {isLoading ? 'Logging in...' : 'Log In'}
-        </Button>
-      </form>
-    </Form>
+    <TooltipProvider>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="username">Username</FormLabel>
+                <FormControl>
+                  <Input
+                    id="username"
+                    placeholder="Your MÁV Username"
+                    autoComplete="username"
+                    {...field}
+                    className="text-base"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="end" className="max-w-xs">
+                      <p className="text-sm">
+                        Your MÁV password needs to be sent to {hostname ? `this server (${hostname})` : 'our server'} to log you into your MÁV account.
+                        It is only used to retrieve your ticket information and is not stored on our server.
+                        Your password is only shared with MÁV's official API for authentication.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <FormControl>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Your MÁV Password"
+                    autoComplete="current-password"
+                    {...field}
+                    className="text-base"
+                  />
+                </FormControl>
+                <FormMessage />
+                 <p className="text-xs text-muted-foreground pt-1">
+                  Your MÁV password will be shared with {hostname || 'this website'}.
+                </p>
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full text-base py-6" disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <LogIn className="mr-2 h-5 w-5" />
+            )}
+            {isLoading ? 'Logging in...' : 'Log In'}
+          </Button>
+        </form>
+      </Form>
+    </TooltipProvider>
   );
 }
