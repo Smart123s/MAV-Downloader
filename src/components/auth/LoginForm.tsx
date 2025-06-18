@@ -141,7 +141,7 @@ export default function LoginForm() {
                       <p className="text-sm">
                         Your MÁV password needs to be sent to {hostname ? `this server (${hostname})` : 'our server'} to log you into your MÁV account.
                         It is only used to retrieve your ticket information and is not stored on our server.
-                        Your password is only shared with MÁV's official API for authentication.
+                        This application only shares your password with MÁV's official API for authentication.
                       </p>
                     </TooltipContent>
                   </Tooltip>
