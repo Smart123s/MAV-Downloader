@@ -164,7 +164,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
               </style>
             </head>
             <body>
-              <img src="${imageDataUri}" alt="Ticket for ${ticket.passengerName} - ${ticket.ticketName}" onload="setTimeout(() => { window.print(); }, 200);" />
+              <img src="${imageDataUri}" alt="Ticket for ${ticket.passengerName} - ${ticket.ticketName}" onload="setTimeout(() => { window.print(); window.close(); }, 200);" />
             </body>
           </html>
         `);
@@ -202,6 +202,8 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
       setFullScreenImageSrc(ticketImageSrc);
       setIsFullScreen(true);
     } else {
+      // Attempt to fetch if not already a data URI, might show loader temporarily in fullscreen
+      setImageLoading(true); // Indicate loading for fullscreen purposes
       try {
         const imageToDisplay = await fetchAndSetActualImage(ticket.bizonylatAzonosito);
         setFullScreenImageSrc(imageToDisplay);
@@ -212,6 +214,8 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           title: "Error Enlarging Image",
           description: "Could not load the full ticket image. Please check the error on the card or try again.",
         });
+      } finally {
+        setImageLoading(false); // Reset card-level image loading if it was set
       }
     }
   };
@@ -303,7 +307,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           </div>
         </CardContent>
         <CardFooter className="p-4 border-t">
-          <div className="flex w-full gap-2">
+          <div className="flex flex-row md:flex-col xl:flex-row w-full gap-2">
               <Button
                 onClick={handleDownload}
                 className="flex-1"
