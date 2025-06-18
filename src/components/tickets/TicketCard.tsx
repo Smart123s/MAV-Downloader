@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle, Coins, Printer } from 'lucide-react';
+import { Download, User, CalendarDays, Tag, Info, Loader2, AlertTriangle, Coins, Printer, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import type { DisplayableTicket, AppGetTicketImageSuccessResponse, AppGetTicketImageErrorResponse } from '@/types/mav-api';
@@ -26,13 +26,16 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  const fetchAndSetActualImage = useCallback(async (currentBizonylatId: string) => {
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [fullScreenImageSrc, setFullScreenImageSrc] = useState<string | null>(null);
+
+
+  const fetchAndSetActualImage = useCallback(async (currentBizonylatId: string): Promise<string> => {
     if (!username || !mavToken) {
-        // Fallback to placeholder if auth details are missing during an explicit fetch
         setTicketImageSrc(ticket.imageUrl);
         setImageLoading(false);
         setImageError("Authentication details missing.");
-        return ticket.imageUrl; // Return placeholder
+        return ticket.imageUrl; 
     }
 
     setImageLoading(true);
@@ -61,9 +64,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         const errorMessage = err instanceof Error ? err.message : "Could not load ticket image.";
         setImageError(errorMessage);
         if (!ticketImageSrc.startsWith('data:image/jpeg')) { 
-            setTicketImageSrc(ticket.imageUrl); // Revert to placeholder if current isn't actual image
+            setTicketImageSrc(ticket.imageUrl); 
         }
-        throw err; // Re-throw to be caught by calling function
+        throw err; 
     } finally {
         setImageLoading(false);
     }
@@ -73,25 +76,23 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   useEffect(() => {
     const currentBizonylatId = ticket.bizonylatAzonosito;
     if (!currentBizonylatId) {
-        setTicketImageSrc(ticket.imageUrl); // Fallback to placeholder
+        setTicketImageSrc(ticket.imageUrl); 
         setImageLoading(false);
         setImageError(null);
         return;
     }
-    // Only auto-fetch if the current source is the placeholder
     if (ticketImageSrc === ticket.imageUrl || !ticketImageSrc.startsWith('data:image/jpeg')) {
         fetchAndSetActualImage(currentBizonylatId).catch(() => {
-            // Error is handled within fetchAndSetActualImage by setting imageError
+            // Error is handled within fetchAndSetActualImage
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket.bizonylatAzonosito, ticket.imageUrl]); // Removed fetchAndSetActualImage from deps to avoid cycle with ticketImageSrc
+  }, [ticket.bizonylatAzonosito, ticket.imageUrl]);
 
   const getTicketImageDataUri = async (): Promise<string> => {
     if (ticketImageSrc.startsWith('data:image/jpeg')) {
       return ticketImageSrc;
     }
-    // If not a data URI, it must be the placeholder or an error state, try fetching.
     return fetchAndSetActualImage(ticket.bizonylatAzonosito);
   };
   
@@ -142,29 +143,24 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
               <style>
                 @page { 
                   size: auto; 
-                  margin: 10mm; /* Sensible default print margin */
+                  margin: 10mm; 
                 }
                 body { 
                   margin: 0; 
                   padding: 0; 
                   display: flex; 
-                  justify-content: center; /* Center image on page */
-                  align-items: flex-start; /* Align image to top if page is larger */
+                  justify-content: center; 
+                  align-items: flex-start; 
                 }
                 img { 
                   width: 8.2cm; 
-                  max-width: 100%; /* Ensure it doesn't overflow small paper */
+                  max-width: 100%; 
                   height: auto; 
                   display: block; 
                 }
                 @media print {
-                  body { 
-                    display: block; /* For print, simple block display might be better */
-                    margin: 0; padding: 0; 
-                  } 
-                  img {
-                     margin: 0 auto; /* Center image block if body is block */
-                  }
+                  body { display: block; margin: 0; padding: 0; } 
+                  img { margin: 0 auto; }
                 }
               </style>
             </head>
@@ -173,9 +169,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
             </body>
           </html>
         `);
-        // Removed window.close() as it can be unreliable and often blocked.
-        // User can close the tab manually after printing.
-        printWindow.document.close(); // Necessary for some browsers to finish loading
+        printWindow.document.close(); 
       } else {
         toast({
           variant: "destructive",
@@ -195,6 +189,38 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
     }
   };
 
+  const handleImageClick = async () => {
+    if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) {
+      toast({
+        variant: "destructive",
+        title: "Cannot Enlarge",
+        description: "The ticket image could not be loaded. Please try refreshing or check the error icon.",
+      });
+      return;
+    }
+
+    if (ticketImageSrc.startsWith('data:image/jpeg')) {
+      setFullScreenImageSrc(ticketImageSrc);
+      setIsFullScreen(true);
+    } else {
+      // It's likely the placeholder, or an error occurred previously but user wants to try again.
+      try {
+        // Consider adding a specific loading state for the fullscreen view if fetchAndSetActualImage is slow
+        const imageToDisplay = await fetchAndSetActualImage(ticket.bizonylatAzonosito);
+        setFullScreenImageSrc(imageToDisplay);
+        setIsFullScreen(true);
+      } catch (error) {
+        // fetchAndSetActualImage already sets imageError, so the user will see it on the card.
+        // We also show a toast for this specific attempt.
+        toast({
+          variant: "destructive",
+          title: "Error Enlarging Image",
+          description: "Could not load the full ticket image. Please check the error on the card or try again.",
+        });
+      }
+    }
+  };
+
 
   const formatDate = (timestamp: number) => {
     if (!timestamp) return "N/A";
@@ -202,9 +228,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   };
 
   let imageElement;
-  if (imageLoading && !ticketImageSrc.startsWith('data:image/jpeg')) { // Show loader only if current image isn't already the actual one
+  if (imageLoading && !ticketImageSrc.startsWith('data:image/jpeg')) { 
     imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
-  } else if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) { // Show error only if we couldn't load actual image
+  } else if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) { 
     imageElement = (
       <div className="text-center p-4 flex flex-col items-center justify-center text-destructive">
         <AlertTriangle className="h-10 w-10 mb-2" />
@@ -213,10 +239,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
       </div>
     );
   } else if (ticketImageSrc && (ticketImageSrc.startsWith('data:image/jpeg') || ticketImageSrc === ticket.imageUrl) ) {
-     // Display actual image or placeholder if actual image is still loading or failed but we want to show something
     imageElement = (
       <Image
-        src={ticketImageSrc} // This will be data URI or placeholder
+        src={ticketImageSrc} 
         alt={`Ticket for ${ticket.ticketName}`}
         width={ticketImageSrc.startsWith('data:image/jpeg') ? 720 : 300} 
         height={ticketImageSrc.startsWith('data:image/jpeg') ? 1000 : 500}
@@ -225,86 +250,130 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         priority={false} 
       />
     );
-  } else { // Fallback loader if something unexpected
+  } else { 
      imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
   }
 
 
   return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
-      <CardHeader className="p-0 relative">
-        <div className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden">
-          {imageElement}
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow flex flex-col justify-end">
-        <div> {/* Wrapper for title and details to be pushed to bottom */}
-          <div className="flex justify-between items-start mb-3">
-            <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
-              {ticket.ticketName}
-            </CardTitle>
+    <>
+      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+        <CardHeader className="p-0 relative">
+          <div 
+            className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden cursor-pointer"
+            onClick={handleImageClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleImageClick(); }}
+            aria-label={`Enlarge ticket image for ${ticket.ticketName}`}
+          >
+            {imageElement}
           </div>
-          
-          <div className="text-sm text-muted-foreground space-y-1.5">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" /> 
-              <span>{ticket.passengerName}</span>
+        </CardHeader>
+        <CardContent className="p-4 flex-grow flex flex-col justify-end">
+          <div> 
+            <div className="flex justify-between items-start mb-3">
+              <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
+                {ticket.ticketName}
+              </CardTitle>
             </div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-primary" />
-              <span>{formatDate(ticket.validFrom)} - {formatDate(ticket.validTo)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Coins className="h-4 w-4 text-primary" />
-              <span>{ticket.price} HUF</span>
-            </div>
-            {ticket.discount && (
+            
+            <div className="text-sm text-muted-foreground space-y-1.5">
               <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-primary" />
-                <span>{ticket.discount}</span>
+                <User className="h-4 w-4 text-primary" /> 
+                <span>{ticket.passengerName}</span>
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-primary" />
-              <span>Status: {ticket.status}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span>ID: {ticket.bizonylatAzonosito} / {ticket.jegysorszam}</span>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span>{formatDate(ticket.validFrom)} - {formatDate(ticket.validTo)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-primary" />
+                <span>{ticket.price} HUF</span>
+              </div>
+              {ticket.discount && (
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  <span>{ticket.discount}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary" />
+                <span>Status: {ticket.status}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span>ID: {ticket.bizonylatAzonosito} / {ticket.jegysorszam}</span>
+              </div>
             </div>
           </div>
+        </CardContent>
+        <CardFooter className="p-4 border-t">
+          <div className="flex w-full gap-2">
+              <Button 
+                onClick={handleDownload} 
+                className="flex-1" 
+                aria-label={`Download ticket for ${ticket.ticketName}`}
+                disabled={isDownloading || isPrinting || imageLoading} 
+              >
+                {isDownloading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                {isDownloading ? 'Downloading...' : 'Download'}
+              </Button>
+              <Button 
+                onClick={handlePrint} 
+                className="flex-1"
+                variant="outline"
+                aria-label={`Print ticket for ${ticket.ticketName}`}
+                disabled={isPrinting || isDownloading || imageLoading} 
+              >
+                {isPrinting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Printer className="mr-2 h-4 w-4" />
+                )}
+                {isPrinting ? 'Printing...' : 'Print'}
+              </Button>
+          </div>
+        </CardFooter>
+      </Card>
+
+      {isFullScreen && fullScreenImageSrc && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={() => setIsFullScreen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`fullscreen-ticket-title-${ticket.id}`}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); 
+              setIsFullScreen(false);
+            }}
+            className="absolute top-4 right-4 z-[101] text-white bg-black/60 rounded-full p-2 hover:bg-black/80 transition-colors"
+            aria-label="Close fullscreen image"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <div 
+            className="relative max-w-full max-h-full overflow-auto" 
+            onClick={(e) => e.stopPropagation()} // Prevents closing when clicking on the image itself
+          >
+            <h2 id={`fullscreen-ticket-title-${ticket.id}`} className="sr-only">
+              Fullscreen Ticket: {ticket.ticketName} for {ticket.passengerName}
+            </h2>
+            <img
+              src={fullScreenImageSrc}
+              alt={`Fullscreen ticket for ${ticket.ticketName} - ${ticket.passengerName}`}
+              className="block max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+            />
+          </div>
         </div>
-      </CardContent>
-      <CardFooter className="p-4 border-t">
-        <div className="flex w-full gap-2">
-            <Button 
-              onClick={handleDownload} 
-              className="flex-1" 
-              aria-label={`Download ticket for ${ticket.ticketName}`}
-              disabled={isDownloading || isPrinting || imageLoading} 
-            >
-              {isDownloading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-            <Button 
-              onClick={handlePrint} 
-              className="flex-1"
-              variant="outline"
-              aria-label={`Print ticket for ${ticket.ticketName}`}
-              disabled={isPrinting || isDownloading || imageLoading} 
-            >
-              {isPrinting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Printer className="mr-2 h-4 w-4" />
-              )}
-              {isPrinting ? 'Printing...' : 'Print'}
-            </Button>
-        </div>
-      </CardFooter>
-    </Card>
+      )}
+    </>
   );
 }
+
