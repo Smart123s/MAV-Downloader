@@ -323,7 +323,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
               </Button>
               <Button
                 onClick={handlePrint}
-                className="flex-1"
+                className="flex-1 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
                 variant="outline"
                 aria-label={`Print ticket for ${ticket.ticketName}`}
                 disabled={isPrinting || isDownloading || imageLoading || (imageError && !ticketImageSrc.startsWith('data:image/jpeg'))}
