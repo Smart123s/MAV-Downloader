@@ -3,13 +3,6 @@
 
 This application allows you to easily access, view, and download your MÁV (Hungarian State Railways) tickets and passes. It's particularly useful for obtaining digital copies of tickets, including those that might typically be restricted to mobile app viewing, like the country or county passes.
 
-## Core Features
-
-*   **Secure Login**: Access your MÁV account using your existing username and password.
-*   **Ticket Browser**: View all your active tickets and passes in an organized image gallery.
-*   **Easy Download**: Download high-quality images of your tickets for offline use or printing.
-*   **Mobile Ticket Access**: Download tickets that are usually only viewable in the MÁV mobile app (e.g., country/county passes).
-
 ## Getting Started
 
 ### Running Locally with Docker (Recommended)
@@ -20,14 +13,6 @@ The easiest way to run the application locally is using the pre-built Docker ima
 
 ```bash
 docker run -p 9002:3000 ghcr.io/smart123s/mav-downloader:latest
-```
-
-**Using `docker-compose`:**
-
-Ensure you have Docker Compose installed. Then, from the project root directory:
-
-```bash
-docker-compose up --build
 ```
 
 After starting the container with either method, open your browser and navigate to `http://localhost:9002`.
@@ -85,7 +70,6 @@ For example, to set the limit to 1000 requests per hour, you would set this envi
 ```bash
 export MAV_API_MAX_HOURLY_REQUESTS=1000
 ```
-Or, if using Docker, you can pass it using the `-e` flag or in your `docker-compose.yml` file.
 
 ## Disclaimer
 
