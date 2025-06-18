@@ -131,7 +131,7 @@ export default function LoginForm() {
                 <FormMessage />
                 <div className="flex items-center gap-1 pt-1">
                   <p className="text-xs text-muted-foreground">
-                    Your MÁV password will be shared with {hostname || 'this website'}.
+                    Your MÁV password will be sent to {hostname || 'this website'}.
                   </p>
                   <Tooltip>
                     <TooltipTrigger asChild>
