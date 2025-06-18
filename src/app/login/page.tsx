@@ -18,7 +18,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
       <footer className="mt-8 text-center text-sm text-muted-foreground">
-        <p className="mb-2">This application is not affiliated with MÁV-START&nbsp;Zrt. or MÁV&nbsp;Zrt.</p>
+        <p className="mb-2">This application is not affiliated with MÁV&#8209;START&nbsp;Zrt. or MÁV&nbsp;Zrt.</p>
         <Link
           href="https://github.com/Smart123s/MAV-Downloader"
           target="_blank"
