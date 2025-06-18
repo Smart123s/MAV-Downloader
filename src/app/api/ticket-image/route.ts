@@ -9,10 +9,18 @@ import type {
   AppGetTicketImageErrorResponse
 } from '@/types/mav-api';
 import { ثابت_UAID } from '@/lib/constants';
+import { isRateLimited } from '@/lib/rate-limiter';
 
 const MAV_API_JEGYKEP_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/GetJegykep';
 
 export async function POST(request: NextRequest) {
+  if (isRateLimited()) {
+    return NextResponse.json(
+      { message: 'Too Many Requests. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body: AppGetTicketImageRequestPayload = await request.json();
     const { username, token, bizonylatAzonosito } = body;
@@ -23,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const mavPayload: MavGetJegykepRequestPayload = {
       FelhasznaloAzonosito: username,
-      BizonylatAzonosito: [bizonylatAzonosito], // MAV API expects an array
+      BizonylatAzonosito: [bizonylatAzonosito],
       Token: token,
       Nyelv: "HU",
       UAID: ثابت_UAID,

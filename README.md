@@ -1,17 +1,36 @@
+
 # MÁV Downloader
 
 This application allows you to easily access, view, and download your MÁV (Hungarian State Railways) tickets and passes. It's particularly useful for obtaining digital copies of tickets, including those that might typically be restricted to mobile app viewing, like the country or county passes.
 
+## Core Features
+
+*   **Secure Login**: Access your MÁV account using your existing username and password.
+*   **Ticket Browser**: View all your active tickets and passes in an organized image gallery.
+*   **Easy Download**: Download high-quality images of your tickets for offline use or printing.
+*   **Mobile Ticket Access**: Download tickets that are usually only viewable in the MÁV mobile app (e.g., country/county passes).
+
 ## Getting Started
 
-### Running Locally with Docker
+### Running Locally with Docker (Recommended)
 
-The easiest way to run the application locally is using the pre-built Docker image from GitHub Container Registry:
+The easiest way to run the application locally is using the pre-built Docker image from GitHub Container Registry or by using Docker Compose.
+
+**Using `docker run`:**
 
 ```bash
 docker run -p 9002:3000 ghcr.io/smart123s/mav-downloader:latest
 ```
-Then, open your browser and navigate to `http://localhost:9002`.
+
+**Using `docker-compose`:**
+
+Ensure you have Docker Compose installed. Then, from the project root directory:
+
+```bash
+docker-compose up --build
+```
+
+After starting the container with either method, open your browser and navigate to `http://localhost:9002`.
 
 *(The image `ghcr.io/smart123s/mav-downloader:latest` is built by the GitHub Actions workflow in this repository.)*
 
@@ -32,7 +51,7 @@ Then, open your browser and navigate to `http://localhost:9002`.
     ```bash
     npm run dev
     ```
-    This will start the Next.js development server, typically on `http://localhost:3000`.
+    This will start the Next.js development server, typically on `http://localhost:3000` (but configured for `http://localhost:9002` in `package.json`).
 
 ## Building for Production
 
@@ -46,9 +65,29 @@ This will generate an optimized build in the `.next` folder. You can then start 
 npm run start
 ```
 
-## CORS Limitations
+## CORS Proxy Backend
 
-Directly accessing MÁV's APIs from a web browser is often hindered by Cross-Origin Resource Sharing (CORS) policies. This application includes a backend that acts as a proxy, securely forwarding requests to the MÁV APIs and returning the data to the frontend, thus bypassing these CORS limitations.
+Directly accessing MÁV's APIs from a web browser is often hindered by Cross-Origin Resource Sharing (CORS) policies. This application includes a backend that acts as a proxy, securely forwarding requests from the frontend to the MÁV APIs and returning the data. This approach bypasses CORS limitations and allows the application to function smoothly in a browser environment.
+
+## Rate Limiting
+
+To prevent abuse and to respect MÁV's API limits, this application includes a global rate limiter for requests proxied to the MÁV servers. By default, it allows 3000 requests per hour from this application instance.
+
+This limit applies globally to all users of this instance of the application. If you are self-hosting and expect high traffic, you might need to adjust these limits or implement a more robust distributed rate-limiting solution if deploying multiple instances.
+
+### Configuration
+
+The rate limit can be configured using the following environment variables:
+
+-   `MAV_API_RATE_LIMIT_MAX_REQUESTS`: The maximum number of requests allowed within the window. (Default: `3000`)
+-   `MAV_API_RATE_LIMIT_WINDOW_HOURS`: The duration of the rate limiting window in hours. (Default: `1`)
+
+For example, to set the limit to 1000 requests per 30 minutes, you would set these environment variables before running the application:
+```bash
+export MAV_API_RATE_LIMIT_MAX_REQUESTS=1000
+export MAV_API_RATE_LIMIT_WINDOW_HOURS=0.5
+```
+Or, if using Docker, you can pass them using the `-e` flag or in your `docker-compose.yml` file.
 
 ## Disclaimer
 

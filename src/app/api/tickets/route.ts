@@ -10,10 +10,18 @@ import type {
   MavJegy
 } from '@/types/mav-api';
 import { ثابت_UAID } from '@/lib/constants'; 
+import { isRateLimited } from '@/lib/rate-limiter';
 
 const MAV_API_TICKETS_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/MegrendelesKereses';
 
 export async function POST(request: NextRequest) {
+  if (isRateLimited()) {
+    return NextResponse.json(
+      { message: 'Too Many Requests. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { username, token } = body;
@@ -64,7 +72,7 @@ export async function POST(request: NextRequest) {
               validTo: ticketDetail.ErvVeg,
               price: ticketDetail.Ar,
               status: ticketDetail.Allapot,
-              imageUrl: `https://placehold.co/300x500.png?text=${encodeURIComponent(ticketDetail.Nev.substring(0,15))}`, // Placeholder for card display
+              imageUrl: `https://placehold.co/300x500.png?text=${encodeURIComponent(ticketDetail.Nev.substring(0,15))}`,
               bizonylatAzonosito: ticketImageGroup.BizonylatAzonosito,
               jegysorszam: ticketImageGroup.Jegysorszam,
               tetelAzonosito: ticketDetail.TetelAzonosito,
