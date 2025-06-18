@@ -35,7 +35,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         setTicketImageSrc(ticket.imageUrl);
         setImageLoading(false);
         setImageError("Authentication details missing.");
-        return ticket.imageUrl; 
+        return ticket.imageUrl;
     }
 
     setImageLoading(true);
@@ -63,10 +63,10 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         console.error(`Error fetching ticket image for ${currentBizonylatId}:`, err);
         const errorMessage = err instanceof Error ? err.message : "Could not load ticket image.";
         setImageError(errorMessage);
-        if (!ticketImageSrc.startsWith('data:image/jpeg')) { 
-            setTicketImageSrc(ticket.imageUrl); 
+        if (!ticketImageSrc.startsWith('data:image/jpeg')) {
+            setTicketImageSrc(ticket.imageUrl);
         }
-        throw err; 
+        throw err;
     } finally {
         setImageLoading(false);
     }
@@ -76,7 +76,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   useEffect(() => {
     const currentBizonylatId = ticket.bizonylatAzonosito;
     if (!currentBizonylatId) {
-        setTicketImageSrc(ticket.imageUrl); 
+        setTicketImageSrc(ticket.imageUrl);
         setImageLoading(false);
         setImageError(null);
         return;
@@ -86,8 +86,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
             // Error is handled within fetchAndSetActualImage
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket.bizonylatAzonosito, ticket.imageUrl]);
+  }, [ticket.bizonylatAzonosito, ticket.imageUrl, fetchAndSetActualImage, ticketImageSrc]);
 
   const getTicketImageDataUri = async (): Promise<string> => {
     if (ticketImageSrc.startsWith('data:image/jpeg')) {
@@ -169,7 +168,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
             </body>
           </html>
         `);
-        printWindow.document.close(); 
+        printWindow.document.close();
       } else {
         toast({
           variant: "destructive",
@@ -203,15 +202,11 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
       setFullScreenImageSrc(ticketImageSrc);
       setIsFullScreen(true);
     } else {
-      // It's likely the placeholder, or an error occurred previously but user wants to try again.
       try {
-        // Consider adding a specific loading state for the fullscreen view if fetchAndSetActualImage is slow
         const imageToDisplay = await fetchAndSetActualImage(ticket.bizonylatAzonosito);
         setFullScreenImageSrc(imageToDisplay);
         setIsFullScreen(true);
       } catch (error) {
-        // fetchAndSetActualImage already sets imageError, so the user will see it on the card.
-        // We also show a toast for this specific attempt.
         toast({
           variant: "destructive",
           title: "Error Enlarging Image",
@@ -228,9 +223,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   };
 
   let imageElement;
-  if (imageLoading && !ticketImageSrc.startsWith('data:image/jpeg')) { 
+  if (imageLoading && !ticketImageSrc.startsWith('data:image/jpeg')) {
     imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
-  } else if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) { 
+  } else if (imageError && !ticketImageSrc.startsWith('data:image/jpeg')) {
     imageElement = (
       <div className="text-center p-4 flex flex-col items-center justify-center text-destructive">
         <AlertTriangle className="h-10 w-10 mb-2" />
@@ -241,16 +236,16 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   } else if (ticketImageSrc && (ticketImageSrc.startsWith('data:image/jpeg') || ticketImageSrc === ticket.imageUrl) ) {
     imageElement = (
       <Image
-        src={ticketImageSrc} 
+        src={ticketImageSrc}
         alt={`Ticket for ${ticket.ticketName}`}
-        width={ticketImageSrc.startsWith('data:image/jpeg') ? 720 : 300} 
+        width={ticketImageSrc.startsWith('data:image/jpeg') ? 720 : 300}
         height={ticketImageSrc.startsWith('data:image/jpeg') ? 1000 : 500}
         className="object-contain w-full h-auto max-h-[450px]"
         data-ai-hint={aiHint || "train ticket travel"}
-        priority={false} 
+        priority={false}
       />
     );
-  } else { 
+  } else {
      imageElement = <Loader2 className="h-10 w-10 animate-spin text-primary my-10" />;
   }
 
@@ -259,7 +254,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
     <>
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
         <CardHeader className="p-0 relative">
-          <div 
+          <div
             className="w-full bg-muted flex items-center justify-center min-h-[250px] rounded-t-lg overflow-hidden cursor-pointer"
             onClick={handleImageClick}
             role="button"
@@ -271,7 +266,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           </div>
         </CardHeader>
         <CardContent className="p-4 flex-grow flex flex-col justify-end">
-          <div> 
+          <div>
             <div className="flex justify-between items-start mb-3">
               <CardTitle className="font-headline text-lg leading-tight truncate mr-2" title={ticket.ticketName}>
                 {ticket.ticketName}
@@ -280,7 +275,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
             
             <div className="text-sm text-muted-foreground space-y-1.5">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-primary" /> 
+                <User className="h-4 w-4 text-primary" />
                 <span>{ticket.passengerName}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -309,11 +304,11 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         </CardContent>
         <CardFooter className="p-4 border-t">
           <div className="flex w-full gap-2">
-              <Button 
-                onClick={handleDownload} 
-                className="flex-1" 
+              <Button
+                onClick={handleDownload}
+                className="flex-1"
                 aria-label={`Download ticket for ${ticket.ticketName}`}
-                disabled={isDownloading || isPrinting || imageLoading} 
+                disabled={isDownloading || isPrinting || imageLoading || (imageError && !ticketImageSrc.startsWith('data:image/jpeg'))}
               >
                 {isDownloading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -322,12 +317,12 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
                 )}
                 {isDownloading ? 'Downloading...' : 'Download'}
               </Button>
-              <Button 
-                onClick={handlePrint} 
+              <Button
+                onClick={handlePrint}
                 className="flex-1"
                 variant="outline"
                 aria-label={`Print ticket for ${ticket.ticketName}`}
-                disabled={isPrinting || isDownloading || imageLoading} 
+                disabled={isPrinting || isDownloading || imageLoading || (imageError && !ticketImageSrc.startsWith('data:image/jpeg'))}
               >
                 {isPrinting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,7 +345,7 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
         >
           <button
             onClick={(e) => {
-              e.stopPropagation(); 
+              e.stopPropagation();
               setIsFullScreen(false);
             }}
             className="absolute top-4 right-4 z-[101] text-white bg-black/60 rounded-full p-2 hover:bg-black/80 transition-colors"
@@ -358,9 +353,9 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
           >
             <X className="h-6 w-6" />
           </button>
-          <div 
-            className="relative max-w-full max-h-full overflow-auto" 
-            onClick={(e) => e.stopPropagation()} // Prevents closing when clicking on the image itself
+          <div
+            className="relative max-w-full max-h-full overflow-auto"
+            onClick={(e) => e.stopPropagation()} 
           >
             <h2 id={`fullscreen-ticket-title-${ticket.id}`} className="sr-only">
               Fullscreen Ticket: {ticket.ticketName} for {ticket.passengerName}
@@ -377,3 +372,4 @@ export default function TicketCard({ ticket, "data-ai-hint": aiHint }: TicketCar
   );
 }
 
+    
