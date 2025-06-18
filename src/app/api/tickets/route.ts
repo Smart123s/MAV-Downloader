@@ -9,7 +9,7 @@ import type {
   MavJegykepAdat,
   MavJegy
 } from '@/types/mav-api';
-import { ثابت_UAID } from '@/lib/constants'; 
+import { MAV_UAID } from '@/lib/constants'; 
 import { isRateLimited } from '@/lib/rate-limiter';
 
 const MAV_API_TICKETS_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/MegrendelesKereses';
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       FelhasznaloAzonosito: username,
       Token: token,
       Nyelv: "HU",
-      UAID: ثابت_UAID,
+      UAID: MAV_UAID,
     };
 
     const mavResponse = await fetch(MAV_API_TICKETS_URL, {
