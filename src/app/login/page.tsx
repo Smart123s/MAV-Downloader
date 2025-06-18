@@ -10,7 +10,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="items-center text-center">
           <TicketIcon className="h-16 w-16 text-primary mb-4" />
-          <CardTitle className="font-headline text-3xl">Welcome Back!</CardTitle>
+          <CardTitle className="font-headline text-3xl">MÁV Downloader</CardTitle>
           <CardDescription>Log in to access your MÁV tickets.</CardDescription>
         </CardHeader>
         <CardContent>
