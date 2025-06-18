@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import Header from '@/components/layout/Header';
 import TicketCard from '@/components/tickets/TicketCard';
-import { Loader2, AlertTriangle, Ticket as TicketIconSvg, Github } from 'lucide-react';
+import { Loader2, AlertTriangle, Ticket as TicketIconSvg, Github, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { DisplayableTicket } from '@/types/mav-api';
 import { Button } from '@/components/ui/button';
@@ -114,9 +114,19 @@ export default function TicketsPage() {
       <main className="flex-grow container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="font-headline text-4xl font-bold text-foreground">Your Tickets</h1>
-          <Button onClick={fetchTickets} disabled={pageLoading}>
-            {pageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Refresh Tickets
+          <Button 
+            onClick={fetchTickets} 
+            disabled={pageLoading}
+            aria-label={pageLoading ? "Refreshing tickets" : "Refresh Tickets"}
+          >
+            {pageLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            <span className="hidden sm:ml-2 sm:inline">
+              {pageLoading ? 'Refreshing...' : 'Refresh Tickets'}
+            </span>
           </Button>
         </div>
         
