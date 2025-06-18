@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, HelpCircle } from 'lucide-react';
@@ -29,15 +30,16 @@ import {
 const loginSchema = z.object({
   username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
+  rememberMe: z.boolean().default(false).optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login: authLoginHook } = useAuth();
+  const { login: authLoginHook, isLoading: authIsLoading } = useAuth(); // Renamed isLoading to avoid conflict
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Local loading state for form submission
   const [hostname, setHostname] = useState('');
 
   useEffect(() => {
@@ -51,11 +53,12 @@ export default function LoginForm() {
     defaultValues: {
       username: '',
       password: '',
+      rememberMe: false,
     },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -68,7 +71,7 @@ export default function LoginForm() {
       const result = await response.json();
 
       if (response.ok && result.token) {
-        authLoginHook(result.username, result.token, result.expiresAt);
+        authLoginHook(result.username, result.token, result.expiresAt, data.rememberMe || false, data.password);
         router.push('/tickets');
       } else {
         toast({
@@ -85,9 +88,11 @@ export default function LoginForm() {
         description: "An unexpected error occurred. Please try again later.",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  const currentLoadingState = isSubmitting || authIsLoading;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -129,7 +134,7 @@ export default function LoginForm() {
                   />
                 </FormControl>
                 <FormMessage />
-                <div className="flex items-center gap-1 pt-1">
+                 <div className="flex items-center gap-1 pt-1">
                   <p className="text-xs text-muted-foreground">
                     Your MÁV password will be sent to {hostname || 'this website'}.
                   </p>
@@ -140,8 +145,9 @@ export default function LoginForm() {
                     <TooltipContent side="top" align="start" className="max-w-xs">
                       <p className="text-sm">
                         Your MÁV password needs to be sent to {hostname ? `this server (${hostname})` : 'our server'} to log you into your MÁV account.
-                        It is only used to retrieve your ticket information and is not stored on our server.
+                        It is used to retrieve your ticket information.
                         Our server only shares your password with MÁV's official API for authentication.
+                        If you select "Remember my password", it will be stored in your browser.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -149,13 +155,36 @@ export default function LoginForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full text-base py-6" disabled={isLoading}>
-            {isLoading ? (
+          <FormField
+            control={form.control}
+            name="rememberMe"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md py-1">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    id="rememberMe"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel
+                    htmlFor="rememberMe"
+                    className="font-normal text-sm cursor-pointer"
+                  >
+                    Remember my password
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full text-base py-6" disabled={currentLoadingState}>
+            {currentLoadingState ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
               <LogIn className="mr-2 h-5 w-5" />
             )}
-            {isLoading ? 'Logging in...' : 'Log In'}
+            {currentLoadingState ? 'Logging in...' : 'Log In'}
           </Button>
         </form>
       </Form>
