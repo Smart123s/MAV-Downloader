@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
       FelhasznaloAzonosito: username,
       Jelszo: password,
       Nyelv: "HU",
-      UAID: "0-0ecpn803G72T1ztcxi2BEDDr786d", // Using the example UAID
+      UAID: "0-0ecpn803G72T1ztcxi2BEDDr786d", 
     };
 
     const mavResponse = await fetch(MAV_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json', // Added Accept header
+        'Accept': 'application/json',
       },
       body: JSON.stringify(mavPayload),
     });
@@ -32,7 +32,15 @@ export async function POST(request: NextRequest) {
     const responseData = await mavResponse.json();
 
     if (!mavResponse.ok) {
-      const errorMessage = (responseData as MavLoginErrorResponse)?.Message || `MAV API Error: ${mavResponse.statusText || mavResponse.status}`;
+      const errorResponseData = responseData as MavLoginErrorResponse;
+      let errorMessage = `MAV API Error: ${mavResponse.statusText || mavResponse.status}`;
+
+      if (errorResponseData.Uzenetek && errorResponseData.Uzenetek.length > 0 && errorResponseData.Uzenetek[0].Szoveg) {
+        errorMessage = errorResponseData.Uzenetek[0].Szoveg;
+      } else if (errorResponseData.Message) {
+        errorMessage = errorResponseData.Message;
+      }
+      
       return NextResponse.json({ message: errorMessage }, { status: mavResponse.status });
     }
 
@@ -42,10 +50,9 @@ export async function POST(request: NextRequest) {
         token: successData.Token,
         username: username,
         expiresAt: successData.ErvenyessegVege,
-        // ElfogadandoDoksik: successData.ElfogadandoDoksik, // Can be passed if needed
       }, { status: 200 });
     } else {
-      return NextResponse.json({ message: 'Login failed: Unexpected response from MAV API.' }, { status: 500 });
+      return NextResponse.json({ message: 'Login failed: Unexpected response from MÁV API.' }, { status: 500 });
     }
 
   } catch (error) {
@@ -57,4 +64,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-

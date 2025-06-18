@@ -22,8 +22,15 @@ export interface MavLoginSuccessResponse {
   ElfogadandoDoksik: MavDokumentum[];
 }
 
+export interface MavUzenet {
+  ID: string;
+  Tipus: string;
+  Szoveg: string;
+}
+
 export interface MavLoginErrorResponse {
-  Message?: string;
+  Message?: string; // Keep for potential fallback or other error types
+  Uzenetek?: MavUzenet[];
 }
 
 // Types for MegrendelesKereses (Order Search)
@@ -93,7 +100,7 @@ export interface DisplayableTicket {
   validTo: number;
   price: number;
   status: string;
-  imageUrl: string; // This will be the placeholder image URL
+  imageUrl: string; 
   bizonylatAzonosito: string;
   jegysorszam: string;
   tetelAzonosito: string;
