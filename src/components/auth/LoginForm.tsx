@@ -117,21 +117,7 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="password">Password</FormLabel>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" align="end" className="max-w-xs">
-                      <p className="text-sm">
-                        Your MÁV password needs to be sent to {hostname ? `this server (${hostname})` : 'our server'} to log you into your MÁV account.
-                        It is only used to retrieve your ticket information and is not stored on our server.
-                        Your password is only shared with MÁV's official API for authentication.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                <FormLabel htmlFor="password">Password</FormLabel>
                 <FormControl>
                   <Input
                     id="password"
@@ -143,9 +129,23 @@ export default function LoginForm() {
                   />
                 </FormControl>
                 <FormMessage />
-                 <p className="text-xs text-muted-foreground pt-1">
-                  Your MÁV password will be shared with {hostname || 'this website'}.
-                </p>
+                <div className="flex items-center gap-1 pt-1">
+                  <p className="text-xs text-muted-foreground">
+                    Your MÁV password will be shared with {hostname || 'this website'}.
+                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help flex-shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start" className="max-w-xs">
+                      <p className="text-sm">
+                        Your MÁV password needs to be sent to {hostname ? `this server (${hostname})` : 'our server'} to log you into your MÁV account.
+                        It is only used to retrieve your ticket information and is not stored on our server.
+                        Your password is only shared with MÁV's official API for authentication.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </FormItem>
             )}
           />
