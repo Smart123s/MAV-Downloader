@@ -2,8 +2,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import type { MavLoginRequestPayload, MavLoginSuccessResponse, MavLoginErrorResponse } from '@/types/mav-api';
 import { isRateLimited } from '@/lib/rate-limiter';
+import { MAV_UAID, MAV_API_BASE_URL } from '@/lib/constants';
 
-const MAV_API_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/Bejelentkezes';
+const MAV_API_URL = MAV_API_BASE_URL + '/Bejelentkezes';
 
 export async function POST(request: NextRequest) {
   if (isRateLimited()) {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       FelhasznaloAzonosito: username,
       Jelszo: password,
       Nyelv: "HU",
-      UAID: "0-0ecpn803G72T1ztcxi2BEDDr786d", 
+      UAID: MAV_UAID, 
     };
 
     const mavResponse = await fetch(MAV_API_URL, {

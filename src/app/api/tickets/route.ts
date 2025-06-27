@@ -9,10 +9,10 @@ import type {
   MavJegykepAdat,
   MavJegy
 } from '@/types/mav-api';
-import { MAV_UAID } from '@/lib/constants'; 
+import { MAV_UAID, MAV_API_BASE_URL } from '@/lib/constants';
 import { isRateLimited } from '@/lib/rate-limiter';
 
-const MAV_API_TICKETS_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/MegrendelesKereses';
+const MAV_API_TICKETS_URL = MAV_API_BASE_URL + '/MegrendelesKereses';
 
 export async function POST(request: NextRequest) {
   if (isRateLimited()) {

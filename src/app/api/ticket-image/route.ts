@@ -8,10 +8,10 @@ import type {
   AppGetTicketImageSuccessResponse,
   AppGetTicketImageErrorResponse
 } from '@/types/mav-api';
-import { MAV_UAID } from '@/lib/constants';
+import { MAV_UAID, MAV_API_BASE_URL } from '@/lib/constants';
 import { isRateLimited } from '@/lib/rate-limiter';
 
-const MAV_API_JEGYKEP_URL = 'https://vim.mav-start.hu/VIM/PR/20240320/MobileServiceS.svc/rest/GetJegykep';
+const MAV_API_JEGYKEP_URL = MAV_API_BASE_URL + '/GetJegykep';
 
 export async function POST(request: NextRequest) {
   if (isRateLimited()) {
