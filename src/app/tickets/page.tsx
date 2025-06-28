@@ -84,7 +84,7 @@ export default function TicketsPage() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </main>
          <footer className="py-6 text-center text-sm text-muted-foreground">
-           <p className="mb-2">This application is not affiliated with MÁV&#8209;START&nbsp;Zrt. or MÁV&nbsp;Zrt.</p>
+           <p className="mb-2">This application is not affiliated with MÁV&nbsp;Zrt.</p>
             <Link
               href="https://github.com/Smart123s/MAV-Downloader"
               target="_blank"
@@ -161,7 +161,7 @@ export default function TicketsPage() {
         )}
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground">
-         <p className="mb-2">This application is not affiliated with MÁV&#8209;START&nbsp;Zrt. or MÁV&nbsp;Zrt.</p>
+         <p className="mb-2">This application is not affiliated with MÁV&nbsp;Zrt.</p>
           <Link
             href="https://github.com/Smart123s/MAV-Downloader"
             target="_blank"

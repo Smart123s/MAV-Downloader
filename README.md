@@ -73,7 +73,7 @@ export MAV_API_MAX_HOURLY_REQUESTS=1000
 
 ## Disclaimer
 
-This application is an independent project and is not affiliated with, endorsed by, or in any way officially connected with MÁV-START Zrt. or MÁV Zrt. All MÁV trademarks, service marks, and trade names are the property of their respective owners.
+This application is an independent project and is not affiliated with, endorsed by, or in any way officially connected with MÁV Zrt. All MÁV trademarks, service marks, and trade names are the property of their respective owners.
 
 Use this application at your own risk. The developers are not responsible for any issues arising from its use.
 
